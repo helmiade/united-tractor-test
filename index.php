@@ -13,6 +13,13 @@
   <?php
   require('connection.php');
 
+  // Tentukan jumlah data per halaman
+  $limit = 10; // 10 data per halaman
+
+  // Ambil nomor halaman dari URL, jika tidak ada default ke halaman 1
+  $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+  $offset = ($page - 1) * $limit;
+
   // Ambil data produk untuk dropdown
   $sql_produk = "SELECT * FROM produk";
   $result_produk = $conn->query($sql_produk);
@@ -52,7 +59,15 @@
           $sql .= " WHERE " . implode(' AND ', $conditions);
       }
   }
-  $sql .= " ORDER BY leads.id_leads ASC";
+
+  // Query untuk menghitung total data (dengan filter pencarian jika ada)
+  $sql_count = str_replace("SELECT leads.*, sales.nama_sales, produk.nama_produk", "SELECT COUNT(*) as total", $sql);
+  $result_count = $conn->query($sql_count);
+  $total_data = $result_count->fetch_assoc()['total'];
+  $total_pages = ceil($total_data / $limit); // Hitung total halaman
+
+  // Tambahkan ORDER BY, LIMIT dan OFFSET
+  $sql .= " ORDER BY leads.id_leads ASC LIMIT $limit OFFSET $offset";
 
   $result = $conn->query($sql);
   ?>
@@ -165,9 +180,11 @@
         </div>
       </form>
 
+      <!-- Tabel Data Leads -->
       <table class="table">
         <tr>
-          <th>ID</th>
+          <th>No</th>
+          <th>ID Input</th>
           <th>Tanggal</th>
           <th>Sales</th>
           <th>Nama Lead</th>
@@ -175,26 +192,54 @@
           <th>No. WhatsApp</th>
           <th>Kota</th>
         </tr>
-
         <?php
         if ($result->num_rows > 0) {
-          // Output data setiap baris
+          $no = $offset;
           while ($row = $result->fetch_assoc()) {
-            echo "<tr>
-                        <td>" . $row["id_leads"] . "</td>
-                        <td>" . $row["tanggal"] . "</td>
-                        <td>" . $row["nama_sales"] . "</td>
-                        <td>" . $row["nama_lead"] . "</td>
-                        <td>" . $row["nama_produk"] . "</td>
-                        <td>" . $row["no_wa"] . "</td>
-                        <td>" . $row["kota"] . "</td>
-                    </tr>";
+              $id_leads = str_pad(htmlspecialchars($row['id_leads']), 3, '0', STR_PAD_LEFT);
+              echo "<tr>";
+              echo "<td>" .  ++$no . "</td>";
+              echo "<td>$id_leads</td>";
+              echo "<td>" . htmlspecialchars($row['tanggal']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['nama_sales']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['nama_lead']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['nama_produk']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['no_wa']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['kota']) . "</td>";
+              echo "</tr>";
           }
         } else {
-          echo "<tr><td colspan='7' class='text-center'>Tidak ada data.</td></tr>";
+          echo "<tr><td colspan='8' class='text-center'>Tidak ada data.</td></tr>";
         }
         ?>
       </table>
+
+      <!-- Navigasi Pagination -->
+      <nav aria-label="Page navigation">
+        <ul class="pagination">
+          <!-- Tombol Previous -->
+          <li class="page-item <?= ($page == 1) ? 'disabled' : '' ?>">
+            <a class="page-link" href="?page=<?= $page - 1 ?>" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+
+          <!-- Nomor Halaman -->
+          <?php for ($i = 1; $i <= $total_pages; $i++) { ?>
+            <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+              <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+            </li>
+          <?php } ?>
+
+          <!-- Tombol Next -->
+          <li class="page-item <?= ($page == $total_pages) ? 'disabled' : '' ?>">
+            <a class="page-link" href="?page=<?= $page + 1 ?>" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
     </main>
   </div>
 </body>
