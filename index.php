@@ -39,7 +39,7 @@
 
       $conditions = [];
       if (!empty($search_produk)) {
-          $conditions[] = "produk.nama_produk LIKE '%$search_produk%'";
+          $conditions[] = "leads.id_produk = '$search_produk'";
       }
       if (!empty($search_sales)) {
           $conditions[] = "sales.nama_sales LIKE '%$search_sales%'";
@@ -74,11 +74,11 @@
               <!-- Input Sales -->
               <div class="col">
                 <label class="form-label" for="sales">Sales</label><br>
-                <select class="form-select" name="sales" id="sales">
+                <select class="form-select" name="sales" id="sales" required>
                   <option value="">-- Pilih Sales --</option>
-                  <option value="1">Sales 1</option>
-                  <option value="2">Sales 2</option>
-                  <option value="3">Sales 3</option>
+                  <?php while ($sales = $result_sales->fetch_assoc()) { ?>
+                    <option value="<?= $sales['id_sales'] ?>"><?= $sales['nama_sales'] ?></option>
+                  <?php } ?>
                 </select><br><br>
               </div>
               <!-- Input Lead Name -->
@@ -91,7 +91,7 @@
             <div class="row">
               <div class="col">
                 <label class="form-label" for="produk">Produk</label><br>
-                <select class="form-select" name="produk" id="produk">
+                <select class="form-select" name="produk" id="produk" required>
                   <option value="">-- Pilih Produk --</option>
                   <?php while ($produk = $result_produk->fetch_assoc()) { ?>
                     <option value="<?= $produk['id_produk'] ?>"><?= $produk['nama_produk'] ?></option>
@@ -127,26 +127,35 @@
       <form method="post" class="mb-3">
         <div class="row mb-3">
           <div class="col">
-            <input type="text" class="form-control" name="search_produk" placeholder="Cari berdasarkan nama produk" value="<?= $search_produk ?>">
+            <select class="form-select" name="search_produk">
+              <option value="">-- Pilih Produk --</option>
+              <?php
+              $result_produk->data_seek(0); // Reset pointer ke awal
+              while ($produk = $result_produk->fetch_assoc()) { ?>
+                  <option value="<?= $produk['id_produk'] ?>" <?= $search_produk == $produk['id_produk'] ? 'selected' : '' ?>>
+                      <?= $produk['nama_produk'] ?>
+                  </option>
+              <?php } ?>
+            </select>
           </div>
           <div class="col">
-            <input type="text" class="form-control" name="search_sales" placeholder="Cari berdasarkan nama sales" value="<?= $search_sales ?>">
+            <select class="form-select" name="search_sales">
+              <option value="">-- Pilih Sales --</option>
+              <?php
+              $result_sales->data_seek(0); // Reset pointer ke awal
+              while ($sales = $result_sales->fetch_assoc()) { ?>
+                  <option value="<?= $sales['id_sales'] ?>" <?= $search_sales == $sales['id_sales'] ? 'selected' : '' ?>>
+                      <?= $sales['nama_sales'] ?>
+                  </option>
+              <?php } ?>
+            </select>
           </div>
           <div class="col">
             <select class="form-select" name="search_bulan">
               <option value="">-- Pilih Bulan --</option>
-              <option value="1" <?= $search_bulan == '1' ? 'selected' : '' ?>>Januari</option>
-              <option value="2" <?= $search_bulan == '2' ? 'selected' : '' ?>>Februari</option>
-              <option value="3" <?= $search_bulan == '3' ? 'selected' : '' ?>>Maret</option>
-              <option value="4" <?= $search_bulan == '4' ? 'selected' : '' ?>>April</option>
-              <option value="5" <?= $search_bulan == '5' ? 'selected' : '' ?>>Mei</option>
-              <option value="6" <?= $search_bulan == '6' ? 'selected' : '' ?>>Juni</option>
-              <option value="7" <?= $search_bulan == '7' ? 'selected' : '' ?>>Juli</option>
-              <option value="8" <?= $search_bulan == '8' ? 'selected' : '' ?>>Agustus</option>
-              <option value="9" <?= $search_bulan == '9' ? 'selected' : '' ?>>September</option>
-              <option value="10" <?= $search_bulan == '10' ? 'selected' : '' ?>>Oktober</option>
-              <option value="11" <?= $search_bulan == '11' ? 'selected' : '' ?>>November</option>
-              <option value="12" <?= $search_bulan == '12' ? 'selected' : '' ?>>Desember</option>
+              <?php for ($i = 1; $i <= 12; $i++) { ?>
+                <option value="<?= $i ?>" <?= $search_bulan == $i ? 'selected' : '' ?>><?= date('F', mktime(0, 0, 0, $i, 1)) ?></option>
+              <?php } ?>
             </select>
           </div>
           <div class="col-auto">
@@ -176,7 +185,7 @@
                         <td>" . $row["nama_sales"] . "</td>
                         <td>" . $row["nama_lead"] . "</td>
                         <td>" . $row["nama_produk"] . "</td>
-                        <td>" . $row["no_whatsapp"] . "</td>
+                        <td>" . $row["no_wa"] . "</td>
                         <td>" . $row["kota"] . "</td>
                     </tr>";
           }
