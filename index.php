@@ -17,8 +17,15 @@
   $sql_produk = "SELECT * FROM produk";
   $result_produk = $conn->query($sql_produk);
 
-  // Penanganan pencarian berdasarkan produk
+  // Ambil data sales untuk dropdown
+  $sql_sales = "SELECT * FROM sales";
+  $result_sales = $conn->query($sql_sales);
+
+  // Penanganan pencarian berdasarkan produk, sales, dan bulan
   $search_produk = "";
+  $search_sales = "";
+  $search_bulan = "";
+
   $sql = "SELECT leads.*, sales.nama_sales, produk.nama_produk 
           FROM leads 
           JOIN sales ON leads.id_sales = sales.id_sales 
@@ -27,7 +34,23 @@
   // Check if searching
   if (isset($_POST['search'])) {
       $search_produk = htmlspecialchars($_POST['search_produk']);
-      $sql .= " WHERE produk.nama_produk LIKE '%$search_produk%'";
+      $search_sales = htmlspecialchars($_POST['search_sales']);
+      $search_bulan = htmlspecialchars($_POST['search_bulan']);
+
+      $conditions = [];
+      if (!empty($search_produk)) {
+          $conditions[] = "produk.nama_produk LIKE '%$search_produk%'";
+      }
+      if (!empty($search_sales)) {
+          $conditions[] = "sales.nama_sales LIKE '%$search_sales%'";
+      }
+      if (!empty($search_bulan)) {
+          $conditions[] = "MONTH(leads.tanggal) = '$search_bulan'";
+      }
+
+      if (count($conditions) > 0) {
+          $sql .= " WHERE " . implode(' AND ', $conditions);
+      }
   }
 
   $result = $conn->query($sql);
@@ -102,9 +125,33 @@
 
       <!-- Form Pencarian -->
       <form method="post" class="mb-3">
-        <div class="input-group">
-          <input type="text" class="form-control" name="search_produk" placeholder="Cari berdasarkan nama produk" value="<?= $search_produk ?>">
-          <button class="btn btn-outline-secondary" type="submit" name="search">Cari</button>
+        <div class="row mb-3">
+          <div class="col">
+            <input type="text" class="form-control" name="search_produk" placeholder="Cari berdasarkan nama produk" value="<?= $search_produk ?>">
+          </div>
+          <div class="col">
+            <input type="text" class="form-control" name="search_sales" placeholder="Cari berdasarkan nama sales" value="<?= $search_sales ?>">
+          </div>
+          <div class="col">
+            <select class="form-select" name="search_bulan">
+              <option value="">-- Pilih Bulan --</option>
+              <option value="1" <?= $search_bulan == '1' ? 'selected' : '' ?>>Januari</option>
+              <option value="2" <?= $search_bulan == '2' ? 'selected' : '' ?>>Februari</option>
+              <option value="3" <?= $search_bulan == '3' ? 'selected' : '' ?>>Maret</option>
+              <option value="4" <?= $search_bulan == '4' ? 'selected' : '' ?>>April</option>
+              <option value="5" <?= $search_bulan == '5' ? 'selected' : '' ?>>Mei</option>
+              <option value="6" <?= $search_bulan == '6' ? 'selected' : '' ?>>Juni</option>
+              <option value="7" <?= $search_bulan == '7' ? 'selected' : '' ?>>Juli</option>
+              <option value="8" <?= $search_bulan == '8' ? 'selected' : '' ?>>Agustus</option>
+              <option value="9" <?= $search_bulan == '9' ? 'selected' : '' ?>>September</option>
+              <option value="10" <?= $search_bulan == '10' ? 'selected' : '' ?>>Oktober</option>
+              <option value="11" <?= $search_bulan == '11' ? 'selected' : '' ?>>November</option>
+              <option value="12" <?= $search_bulan == '12' ? 'selected' : '' ?>>Desember</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-outline-secondary" type="submit" name="search">Cari</button>
+          </div>
         </div>
       </form>
 
@@ -129,27 +176,17 @@
                         <td>" . $row["nama_sales"] . "</td>
                         <td>" . $row["nama_lead"] . "</td>
                         <td>" . $row["nama_produk"] . "</td>
-                        <td>" . $row["no_wa"] . "</td>
+                        <td>" . $row["no_whatsapp"] . "</td>
                         <td>" . $row["kota"] . "</td>
-                      </tr>";
+                    </tr>";
           }
         } else {
-          echo "<tr><td colspan='7'>Tidak ada data</td></tr>";
+          echo "<tr><td colspan='7' class='text-center'>Tidak ada data.</td></tr>";
         }
-
-        // Tutup koneksi
-        $conn->close();
         ?>
       </table>
-
     </main>
   </div>
-
-  <?php
-  include('simpan.php');
-  ?>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
 </body>
 
 </html>
