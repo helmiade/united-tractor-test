@@ -52,6 +52,7 @@
           $sql .= " WHERE " . implode(' AND ', $conditions);
       }
   }
+  $sql .= " ORDER BY leads.id_leads ASC";
 
   $result = $conn->query($sql);
   ?>
